@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://www.w3school.com.cn/jquery/jquery-1.11.1.min.js"></script>
+    <script src="http://data.eastmoney.com/newstatic/js/echarts.min.js"></script>
+</head>
+<body>
+
+
+<script type="text/javascript">
+
+
+    var arrGuPiao=["600037","600053","600055","600071","600077","600129"];
+    var arrGuPiaoLink=new Array();
+    for(var i=0;i<arrGuPiao.length;i++){
+        arrGuPiaoLink[i]='http://dcfm.eastmoney.com/em_mutisvcexpandinterface/api/js/get?type=QGQP_LSJGCYD&token=70f12f2f4f091e459a279469fe49eca5&ps=22&filter=(TRADECODE=%27'+arrGuPiao[i]+'%27)';
+    }
+
+    // <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    // <div id="main" style="width: 600px;height:400px;"></div>
+    for(var i=0;i<arrGuPiaoLink.length;i++) {
+
+        //创建一个div
+        var div = document.createElement("div");
+        //为div创建属性id = "main"+i
+        var divattr = document.createAttribute("id");
+        divattr.value = "main"+i;
+        div.setAttributeNode(divattr);
+        //为div创建属性style = "width: 600px;height:400px;"
+        var divattr1 = document.createAttribute("style");
+        divattr1.value = "width: 600px;height:400px;";
+        div.setAttributeNode(divattr1);
+        document.body.appendChild(div);
+
+        // 基于准备好的dom，初始化echarts实例
+        var myChart = echarts.init(document.getElementById(div.id));
+        myChart.showLoading();  // 开启 loading 效果
+
+
+        $.get(arrGuPiaoLink[i], function (data) {
+            myChart.hideLoading();  // 隐藏 loading 效果
+
+            //日期
+            var arrTRADEDATEreverse = new Array();
+            for (var i = 0; i < data.length; i++) {
+                arrTRADEDATEreverse[i] = data[i].TRADEDATE.substring(5, 10);
+            }
+            var arrTRADEDATE = arrTRADEDATEreverse.reverse();
+
+            //机构参与度
+            var arrJGCYDreverse = new Array();
+            for (var i = 0; i < data.length; i++) {
+                arrJGCYDreverse[i] = (Number(data[i].JGCYD) * 100).toFixed(2);
+            }
+            var arrJGCYD = arrJGCYDreverse.reverse();
+
+
+            var option = {
+                title: {
+                    text: data[0].STOCKNAME,
+                    subtext: data[0].TRADECODE
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    data: ['最高', '最低']
+                },
+                toolbox: {
+                    show: true,
+                    feature: {
+                        dataZoom: {
+                            yAxisIndex: 'none'
+                        },
+                        dataView: {readOnly: false},
+                        magicType: {type: ['line', 'bar']},
+                        restore: {},
+                        saveAsImage: {}
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: arrTRADEDATE
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '{value} %'
+                    }
+                },
+                series: [
+
+                    {
+                        name: '百分比',
+                        type: 'line',
+                        itemStyle: {
+                            normal: {
+                                color: '#1d8fe1', //折点颜色
+                                lineStyle: {
+                                    color: '#1d8fe1' //折线颜色
+                                }
+                            }
+                        },
+                        data: arrJGCYD,
+                        markPoint: {
+                            data: [
+                                {type: 'max', name: '最大值'},
+                                {type: 'min', name: '最小值'}
+                            ]
+                        },
+                        markLine: {
+                            data: [
+                                {type: 'average', name: '平均值'}
+                            ]
+                        }
+                    }
+                ]
+            };
+            myChart.setOption(option)
+        }, 'jsonp');
+
+
+    }
+
+</script>
+</body>
+</html>
